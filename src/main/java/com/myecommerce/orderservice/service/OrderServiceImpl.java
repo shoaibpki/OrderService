@@ -2,6 +2,7 @@ package com.myecommerce.orderservice.service;
 
 import com.myecommerce.orderservice.entity.Order;
 import com.myecommerce.orderservice.entity.OrderDetails;
+import com.myecommerce.orderservice.external.client.ProductService;
 import com.myecommerce.orderservice.model.OrderItemList;
 import com.myecommerce.orderservice.model.OrderRequest;
 import com.myecommerce.orderservice.repository.OrderRepository;
@@ -19,8 +20,12 @@ public class OrderServiceImpl implements OrderService{
     @Autowired
     OrderRepository orderRepository;
 
+    @Autowired
+    ProductService productService;
+
     @Override
     public Long placeOrder(OrderRequest orderRequest) {
+
         log.info("Placing Order Request : {}", orderRequest);
         Order order = Order.builder()
                 .orderDate(Instant.now())
@@ -36,6 +41,11 @@ public class OrderServiceImpl implements OrderService{
     }
 
     private OrderDetails getItems(OrderItemList orderItemList) {
+        log.info("Call product service to reduce quantity of product id");
+        productService.reduceQuantity(
+                orderItemList.getProductId(),
+                orderItemList.getQuantity());
+
         log.info("save order item : {}", orderItemList);
         return OrderDetails.builder()
                 .productId(orderItemList.getProductId())
