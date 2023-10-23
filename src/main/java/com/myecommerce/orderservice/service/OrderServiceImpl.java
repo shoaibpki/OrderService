@@ -2,7 +2,9 @@ package com.myecommerce.orderservice.service;
 
 import com.myecommerce.orderservice.entity.Order;
 import com.myecommerce.orderservice.entity.OrderDetails;
+import com.myecommerce.orderservice.external.client.PaymentService;
 import com.myecommerce.orderservice.external.client.ProductService;
+import com.myecommerce.orderservice.external.request.PaymentRequest;
 import com.myecommerce.orderservice.model.OrderItemList;
 import com.myecommerce.orderservice.model.OrderRequest;
 import com.myecommerce.orderservice.repository.OrderRepository;
@@ -23,6 +25,9 @@ public class OrderServiceImpl implements OrderService{
     @Autowired
     ProductService productService;
 
+    @Autowired
+    PaymentService paymentService;
+
     @Override
     public Long placeOrder(OrderRequest orderRequest) {
 
@@ -35,6 +40,25 @@ public class OrderServiceImpl implements OrderService{
                         .map(this::getItems)
                         .collect(Collectors.toList()))
                 .build();
+        orderRepository.save(order);
+
+        log.info("Calling payment service..");
+        try
+        {
+            paymentService.doPayment(
+                    PaymentRequest.builder()
+                            .orderId(order.getOrderId())
+                            .paymentMode(orderRequest.getPaymentMode())
+                            .amount(orderRequest.getTotalAmount())
+                            .paymentDate(Instant.now())
+                            .build()
+            );
+            order.setStatus("PLACED");
+
+        }catch (Exception e){
+            log.error("Error occurred in payment, changing order status");
+            order.setStatus("PAYMENT_FAILED");
+        }
         orderRepository.save(order);
         log.info("Order placed Successfully with order id : {}", order.getOrderId());
         return order.getOrderId();
