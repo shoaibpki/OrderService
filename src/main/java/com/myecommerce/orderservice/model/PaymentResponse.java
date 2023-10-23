@@ -6,17 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OrderResponse {
+public class PaymentResponse {
+    private long paymentId;
     private long orderId;
-    private Instant orderDate;
-    private String orderStatus;
-    private long totalAmount;
-    private List<OrderItemList> orderItemLists;
-    private PaymentResponse paymentResponse;
+    private String referenceNumber;
+    private PaymentMode paymentMode;
+    private Instant paymentDate;
+    private String paymentStatus;
+    private long amount;
 }

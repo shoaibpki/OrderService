@@ -6,10 +6,7 @@ import com.myecommerce.orderservice.exception.CustomException;
 import com.myecommerce.orderservice.external.client.PaymentService;
 import com.myecommerce.orderservice.external.client.ProductService;
 import com.myecommerce.orderservice.external.request.PaymentRequest;
-import com.myecommerce.orderservice.model.OrderItemList;
-import com.myecommerce.orderservice.model.OrderRequest;
-import com.myecommerce.orderservice.model.OrderResponse;
-import com.myecommerce.orderservice.model.ProductDetail;
+import com.myecommerce.orderservice.model.*;
 import com.myecommerce.orderservice.repository.OrderRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +84,12 @@ public class OrderServiceImpl implements OrderService{
                         .stream().map(this::getOrderItems)
                         .collect(Collectors.toList()))
                 .build();
-
+        log.info("Calling Payment service to get payment detail by given order id");
+        PaymentResponse paymentResponse =
+                restTemplate.getForObject(
+                        "http://PAYMENT-SERVICE/payment/"+orderId,
+                        PaymentResponse.class);
+        orderResponse.setPaymentResponse(paymentResponse);
         return orderResponse;
     }
 
