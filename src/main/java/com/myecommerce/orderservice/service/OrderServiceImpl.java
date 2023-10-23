@@ -9,10 +9,12 @@ import com.myecommerce.orderservice.external.request.PaymentRequest;
 import com.myecommerce.orderservice.model.OrderItemList;
 import com.myecommerce.orderservice.model.OrderRequest;
 import com.myecommerce.orderservice.model.OrderResponse;
+import com.myecommerce.orderservice.model.ProductDetail;
 import com.myecommerce.orderservice.repository.OrderRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -29,6 +31,9 @@ public class OrderServiceImpl implements OrderService{
 
     @Autowired
     PaymentService paymentService;
+
+    @Autowired
+    RestTemplate restTemplate;
 
     @Override
     public Long placeOrder(OrderRequest orderRequest) {
@@ -82,13 +87,21 @@ public class OrderServiceImpl implements OrderService{
                         .stream().map(this::getOrderItems)
                         .collect(Collectors.toList()))
                 .build();
+
         return orderResponse;
     }
 
     private OrderItemList getOrderItems(OrderDetails orderDetails) {
+        log.info("Calling Product service to get product by product id: {}",
+                orderDetails.getProductId());
+        ProductDetail productDetail =
+               restTemplate.getForObject(
+                       "http://PRODUCT-SERVICE/product/"+orderDetails.getProductId(),
+                       ProductDetail.class);
         return OrderItemList.builder()
                 .productId(orderDetails.getProductId())
                 .price(orderDetails.getPrice())
+                .productName(productDetail.getProductName())
                 .quantity(orderDetails.getQuantity())
                 .build();
     }

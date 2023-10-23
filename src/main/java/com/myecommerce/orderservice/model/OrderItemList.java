@@ -11,6 +11,7 @@ import lombok.*;
 public class OrderItemList {
 
     private long productId;
+    private String productName;
     private long quantity;
     private long price;
 
