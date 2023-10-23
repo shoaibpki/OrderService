@@ -2,11 +2,13 @@ package com.myecommerce.orderservice.service;
 
 import com.myecommerce.orderservice.entity.Order;
 import com.myecommerce.orderservice.entity.OrderDetails;
+import com.myecommerce.orderservice.exception.CustomException;
 import com.myecommerce.orderservice.external.client.PaymentService;
 import com.myecommerce.orderservice.external.client.ProductService;
 import com.myecommerce.orderservice.external.request.PaymentRequest;
 import com.myecommerce.orderservice.model.OrderItemList;
 import com.myecommerce.orderservice.model.OrderRequest;
+import com.myecommerce.orderservice.model.OrderResponse;
 import com.myecommerce.orderservice.repository.OrderRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +64,33 @@ public class OrderServiceImpl implements OrderService{
         orderRepository.save(order);
         log.info("Order placed Successfully with order id : {}", order.getOrderId());
         return order.getOrderId();
+    }
+
+    @Override
+    public OrderResponse getOrderById(long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException(
+                        "ORDER_NOT_FOUND",
+                        "Order not found for the order id:"+orderId,
+                        404));
+        OrderResponse orderResponse = OrderResponse.builder()
+                .orderId(order.getOrderId())
+                .orderDate(order.getOrderDate())
+                .orderStatus(order.getStatus())
+                .totalAmount(order.getTotalAmount())
+                .orderItemLists(order.getOrderDetails()
+                        .stream().map(this::getOrderItems)
+                        .collect(Collectors.toList()))
+                .build();
+        return orderResponse;
+    }
+
+    private OrderItemList getOrderItems(OrderDetails orderDetails) {
+        return OrderItemList.builder()
+                .productId(orderDetails.getProductId())
+                .price(orderDetails.getPrice())
+                .quantity(orderDetails.getQuantity())
+                .build();
     }
 
     private OrderDetails getItems(OrderItemList orderItemList) {
